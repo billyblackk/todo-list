@@ -15,5 +15,5 @@ A production-style Todo / task management API built with FastAPI.
 ```bash
 python3 -m venv .todo-list
 source .todo-list/bin/activate
-pip install -r requirements.txt  # once we add this
+pip install -r requirements.txt
 uvicorn app.main:app --reload
