@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+
+# Virtual env
+.venv/
+env/
+venv/
+.todo-list/
+
+# VS Code
+.vscode/
+
+# OS junk
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# MyPy / type checking
+.mypy_cache/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
