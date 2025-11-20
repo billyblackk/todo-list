@@ -13,12 +13,3 @@ class Task(Base):  # SQLAlchemy ORM Model
     title = Column(String(256), nullable=False)
     description = Column(Text, nullable=True)
     is_done = Column(Boolean, nullable=False, server_default="0")
-    created_at = (
-        Column(DateTime(timezone=True), server_default=func.now(), nullable=False),
-    )
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
