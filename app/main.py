@@ -7,6 +7,7 @@ from app.models import user as user_model  # noqa: F401
 
 from app.routers.tasks import router as tasks_router
 from app.routers.users import router as users_router
+from app.routers.auth import router as auth_router
 
 app = FastAPI(title="Todo List API")
 
@@ -23,3 +24,4 @@ def health_check():
 
 app.include_router(tasks_router)
 app.include_router(users_router)
+app.include_router(auth_router)
