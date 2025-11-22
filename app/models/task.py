@@ -1,5 +1,5 @@
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
-from sqlalchemy.sql import func
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
@@ -13,3 +13,7 @@ class Task(Base):  # SQLAlchemy ORM Model
     title = Column(String(256), nullable=False)
     description = Column(Text, nullable=True)
     is_done = Column(Boolean, nullable=False, server_default="0")
+
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="tasks")
