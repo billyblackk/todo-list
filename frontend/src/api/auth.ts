@@ -15,7 +15,7 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
     formData.append("username", data.username);
     formData.append("password", data.password);
 
-    const resposne = await apiClient.post("/token", formData, {
+    const resposne = await apiClient.post("/auth/login", formData, {
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
         },

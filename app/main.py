@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import Base, engine
 
@@ -10,6 +11,19 @@ from app.routers.users import router as users_router
 from app.routers.auth import router as auth_router
 
 app = FastAPI(title="Todo List API")
+
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Create tables in the database (for now we do this at startup)
 Base.metadata.create_all(bind=engine)
