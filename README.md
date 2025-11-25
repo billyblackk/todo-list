@@ -97,19 +97,18 @@ Health Check
 - GET /health
 
 Tasks
-- GET /tasks/
-- POST /tasks/
-- GET /tasks/{id}
-- PUT /tasks/{id}
-- DELETE /tasks/{id}
+- List Tasks - GET /tasks/
+- Create Task - POST /tasks/
+- Get Task - GET /tasks/{id}
+- Update Task - PUT /tasks/{id}
+- Delete Task - DELETE /tasks/{id}
 
-Users (if implemented)
-- POST /users/
-- GET /users/me
+Users
+- Create User - POST /users/
+- Read Current User - GET /users/me
 
-Auth (planned)
-- POST /auth/login
-- POST /auth/register
+Auth
+- Login - POST /auth/login
 
 
 
@@ -141,6 +140,7 @@ pytest
 
 
 ## Future Improvements
+
 - Add JWT auth
 - Add role-based permissions (admin/user)
 - Add Alembic migrations

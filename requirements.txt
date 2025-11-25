@@ -4,3 +4,4 @@ sqlalchemy
 alembic
 passlib[bcrypt]
 python-jose[cryptography]
+pytest>=8.0.0
