@@ -19,9 +19,10 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="function")
 def db_session():
     """
-    Before each test, tables are recreated fresh. This way we can
-    repeat the tests without having to change the test cases. And
-    the database in dev is not contaminated with test data.
+    Before each test, tables are recreated fresh.
+    This way we can keep the tests isolated and repeat
+    tests without having to change the test cases
+    Also the database in dev is not contaminated with test data.
     """
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
