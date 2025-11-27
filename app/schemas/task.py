@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class TaskBase(BaseModel):
@@ -40,6 +40,6 @@ class Task(TaskBase):
     """
 
     id: int
+    owner_id: int
 
-    class Config:
-        from_attributes = True  # tells pydantic that it can read from ORM objects
+    model_config = ConfigDict(from_attributes=True)
