@@ -27,7 +27,6 @@ def create_test_user(client):
         }
 
         response = client.post("/users/", json=payload)
-        assert response.status_code == 201
 
         return {
             "email": email,
@@ -36,6 +35,25 @@ def create_test_user(client):
         }
 
     return _create_test_user
+
+
+@pytest.fixture(scope="function")
+def user_login(client):
+    def _user_login(username: str, password: str):
+        payload = {
+            "username": username,
+            "password": password,
+        }
+
+        response = client.post("/auth/login", data=payload)
+
+        return {
+            "username": username,
+            "password": password,
+            "response": response,
+        }
+
+    return _user_login
 
 
 @pytest.fixture(scope="function")

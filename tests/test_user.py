@@ -1,37 +1,41 @@
 import pytest
 
-# ---------------
-# User Creation
-# ---------------
 
+def test_create_unique_user(create_test_user):
+    email = "unique_pytest@example.com"
+    password = "unique_pytestPassword"
 
-def test_create_unique_user(client):
-    payload = {
-        "email": "unique_pytest@example.com",
-        "password": "unique_pytestPassword",
-    }
+    user = create_test_user(
+        email=email,
+        password=password,
+    )
 
-    response = client.post("/users/", json=payload)
+    assert user["response"].status_code == 201
 
-    data = response.json()
+    data = user["response"].json()
 
-    assert response.status_code == 201
     assert isinstance(data["id"], int)
-    assert data["email"] == payload["email"]
+    assert data["email"] == email
     assert data["is_active"] is True
 
 
-def test_create_duplicate_user(client):
-    payload = {
-        "email": "duplicate_pytest@example.com",
-        "password": "duplicate_pytestPassword",
-    }
+def test_create_duplicate_user(create_test_user):
+    email = "unique_pytest@example.com"
+    password = "unique_pytestPassword"
 
-    first = client.post("/users/", json=payload)
-    assert first.status_code == 201
+    user_1 = create_test_user(
+        email=email,
+        password=password,
+    )
 
-    second = client.post("/users/", json=payload)
-    data = second.json()
+    assert user_1["response"].status_code == 201
 
-    assert second.status_code == 400
+    user_2 = create_test_user(
+        email=email,
+        password=password,
+    )
+
+    data = user_2["response"].json()
+
+    assert user_2["response"].status_code == 400
     assert data["detail"] == "Email is already registered."
