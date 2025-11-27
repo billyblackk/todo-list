@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 
 from app.core.database import Base, engine
@@ -9,10 +10,16 @@ from app.routers.tasks import router as tasks_router
 from app.routers.users import router as users_router
 from app.routers.auth import router as auth_router
 
+
 app = FastAPI(title="Todo List API")
 
-# Create tables in the database (for now we do this at startup)
-Base.metadata.create_all(bind=engine)
+
+@app.on_event("startup")
+def on_startup():
+    if os.getenv("TESTING") == "1":
+        return
+
+    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health", tags=["health"])

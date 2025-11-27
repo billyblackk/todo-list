@@ -8,6 +8,8 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.core.database import Base, get_db
 
+os.environ["TESTING"] = "1"
+
 # Create a test database so that the database in dev isnt contaminated
 SQLALCHEMY_TEST_URL = "sqlite:///.test.db"
 
