@@ -19,6 +19,26 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 
 @pytest.fixture(scope="function")
+def create_test_user(client):
+    def _create_test_user(email: str, password: str):
+        payload = {
+            "email": email,
+            "password": password,
+        }
+
+        response = client.post("/users/", json=payload)
+        assert response.status_code == 201
+
+        return {
+            "email": email,
+            "password": password,
+            "response": response,
+        }
+
+    return _create_test_user
+
+
+@pytest.fixture(scope="function")
 def db_session():
     """
     Before each test, tables are recreated fresh.

@@ -1,72 +1,55 @@
-from fastapi.testclient import TestClient
-from app.main import app
-from app.routers.auth import login
+import pytest
+
+# -----------
+# User Auth
+# -----------
 
 
-def test_create_unique_user(client):
-    payload = {
-        "email": "unique_pytest@example.com",
-        "password": "unique_pytestPassword",
-    }
+def test_successful_login(client, create_test_user):
+    user = create_test_user(
+        email="login_pytest@example.com",
+        password="login_pytest_password",
+    )
 
-    client.post("/users/", json=payload)
-    response = client.post("/users/", json=payload)
+    # login with OAuth2PasswordRequestForm, so use a form, not json
+    login_response = client.post(
+        "/auth/login", data={"username": user["email"], "password": user["password"]}
+    )
+    data = login_response.json()
 
-    data = response.json()
-
-    assert response.status_code == 201
-    assert isinstance(data["id"], int)
-    assert data["email"] == payload["email"]
-    assert data["is_active"] is True
-
-
-def test_create_duplicate_user(client):
-    payload = {
-        "email": "duplicate_pytest@example.com",
-        "password": "duplicate_pytestPassword",
-    }
-
-    first = client.post("/users/", json=payload)
-    assert first.status_code == 201
-
-    second = client.post("/users/", json=payload)
-    data = second.json()
-
-    assert second.status_code == 400
-    assert data["detail"] == "Email is already registered."
+    assert login_response.status_code == 200
+    assert data["token_type"] == "bearer"
+    assert isinstance(data["access_token"], str)
+    assert data["access_token"]
 
 
-def test_get_task_correct_user(client):
-    payload = {
-        "email": "duplicate_pytest@example.com",
-        "password": "duplicate_pytestPassword",
-    }
+def test_unsuccessful_login_username(client, create_test_user):
+    user = create_test_user(
+        email="login_pytest@example.com",
+        password="login_pytest_password",
+    )
 
-    first = client.post("/users/", json=payload)
-    assert first.status_code == 201
+    # login with OAuth2PasswordRequestForm, so use a form, not json
+    login_response = client.post(
+        "/auth/login",
+        data={"username": "wrong_username", "password": user["password"]},
+    )
+
+    assert login_response.status_code == 401
+    assert login_response.headers.get("WWW-Authenticate") == "Bearer"
 
 
-def test_get_task_wrong_user(client):
-    # register with user 1
-    user1_payload = {
-        "email": "user1_pytest@example.com",
-        "password": "user1_pytestPassword",
-    }
+def test_unsuccessful_login_password(client, create_test_user):
+    user = create_test_user(
+        email="login_pytest@example.com",
+        password="login_pytest_password",
+    )
 
-    register_response_1 = client.post("/users/", json=user1_payload)
-    assert register_response_1.status_code == 201
+    # login with OAuth2PasswordRequestForm, so use a form, not json
+    login_response = client.post(
+        "/auth/login",
+        data={"username": user["email"], "password": "wrong_password"},
+    )
 
-    # log in with user 1
-
-    # add task as user 1
-
-    # register with user 2
-    user2_payload = {
-        "email": "user2_pytest@example.com",
-        "password": "user2_pytestPassword",
-    }
-
-    register_response_2 = client.post("/users/", json=user2_payload)
-    assert register_response_2.status_code == 201
-    # log in with user 2
-    # add task as user 2
+    assert login_response.status_code == 401
+    assert login_response.headers.get("WWW-Authenticate") == "Bearer"
