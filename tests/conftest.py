@@ -57,6 +57,17 @@ def user_login(client):
 
 
 @pytest.fixture(scope="function")
+def auth_headers(create_test_user, user_login):
+    def _auth_headers(email: str, password: str):
+        user = create_test_user(email, password)
+        login = user_login(username=email, password=password)
+        data = login["response"].json()
+        return {"Authorization": f"Bearer {data['access_token']}"}
+
+    return _auth_headers
+
+
+@pytest.fixture(scope="function")
 def db_session():
     """
     Before each test, tables are recreated fresh.
