@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.user import User as UserModel
+from app.core.config import settings
 
 # ----------------------------
 # Password Hashing
@@ -35,57 +36,117 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # JWT setting & helper
 # ----------------------------
 
-# For real apps load these credentials from environment variables
-
-SECRET_KEY = "change-me-in-production-very-secret-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+# For apps in production load these credentials from environment variables
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def _create_token(
+    subject_email: str,
+    expires_delta: timedelta,
+    token_type: str,
+) -> str:
     """
-    Create a signed JWT token containing the given data.
-    Inputs passed in will typically be {"sub": user.email} or {"sub": str(user.id)}.
+    Internal helper function to create a signed JWT.
+    - Subject_email goes into the `sub` claim.
+    - token_type is "access" or "refresh"
     """
-    to_encode = data.copy()
+    now = datetime.now(timezone.utc)
+
+    payload: dict[str, Any] = {
+        "sub": subject_email,
+        "type": token_type,
+        "iat": int(now.timestamp()),
+        "exp": int((now + expires_delta).timestamp()),
+    }
+
+    encoded_jwt = jwt.encode(
+        payload,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+    return encoded_jwt
+
+
+def create_access_token(
+    subject_email: str, expires_delta: Optional[timedelta] = None
+) -> str:
+    """
+    Creates an access token for the given user email.
+    """
 
     if expires_delta is None:
-        expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    expire = datetime.now(timezone.utc) + expires_delta
-    to_encode.update({"exp": expire})
+    return _create_token(
+        subject_email=subject_email, expires_delta=expires_delta, token_type="access"
+    )
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+
+def create_refresh_token(subject_email: str) -> str:
+    """
+    Create a refresh token for the given user email.
+    """
+    expires_delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    return _create_token(
+        subject_email=subject_email, expires_delta=expires_delta, token_type="refresh"
+    )
+
+
+def decode_token(token: str) -> dict[str, Any]:
+    """
+    Decode a JWT token and return the payload.
+    Raises HTTPException(401) if invalid.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not valdiate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
+    return payload
+
+
+# ------------------------
+# Current user dependency
+# ------------------------
 
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
+) -> UserModel:
     """
     Decode the JWT, extract the user email, and load the user from the
     database.
 
     Raises a 401 if anything is wrong with the token or user.
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    payload = decode_token(token)
 
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: Optional[str] = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+    email = payload.get("sub")
+    if email is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     user = db.query(UserModel).filter(UserModel.email == email).first()
     if user is None:
-        raise credentials_exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return user
