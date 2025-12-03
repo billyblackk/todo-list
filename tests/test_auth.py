@@ -38,7 +38,7 @@ def test_unsuccessful_login_username(create_test_user, user_login):
     response = login_response["response"]
 
     assert response.status_code == 401
-    assert response.headers.get("WWW-Authenticate") == "Bearer"
+    assert response.json()["detail"] == "Incorrect email or password"
 
 
 def test_unsuccessful_login_password(create_test_user, user_login):
@@ -57,4 +57,4 @@ def test_unsuccessful_login_password(create_test_user, user_login):
     response = login_response["response"]
 
     assert response.status_code == 401
-    assert response.headers.get("WWW-Authenticate") == "Bearer"
+    assert response.json()["detail"] == "Incorrect email or password"
